@@ -1,0 +1,33 @@
+name: 'Authenticate and push to Google Artifact Registry'
+description: 'Authenticates to GCP, configures docker, and pushes an image to GAR'
+inputs:
+  gcp_workload_identity_provider:
+    description: 'The Google Workload Identity Provider ID to use'
+    required: true
+  gcp_service_account:
+    description: 'The Google service account to authenticate as'
+    required: true
+  gcp_repositories:
+    description: 'Comma-separated list of GCP repositories to configure the docker credential helper for'
+    required: false
+    default: europe-west2-docker.pkg.dev
+  image:
+    description: 'The image name and tag to push'
+    required: true
+runs:
+  using: 'composite'
+  steps:
+    - name: Authenticate to GCP
+      uses: google-github-actions/auth@v1
+      with:
+        workload_identity_provider: ${{ inputs.gcp_workload_identity_provider }}
+        service_account: ${{ inputs.gcp_service_account }}
+        token_format: access_token
+
+    - name: Configure docker auth
+      shell: bash
+      run: gcloud auth configure-docker "${{ inputs.gcp_repositories }}"
+
+    - name: Push image
+      shell: bash
+      run: docker push ${{ inputs.image }}
