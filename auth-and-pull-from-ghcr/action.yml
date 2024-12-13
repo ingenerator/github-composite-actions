@@ -1,0 +1,22 @@
+name: 'Authenticate and pull from GitHub Container Registry'
+description: 'Authenticates to GitHub, configures docker, and pulls an image from GitHub Container Registry'
+inputs:
+  github_password:
+    description: 'The GitHub token to use as password'
+    required: true
+  image:
+    description: 'The image name and tag to pull'
+    required: true
+runs:
+    using: 'composite'
+    steps:
+    - name: Login to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ inputs.github_password }}
+
+    - name: Pull image
+      shell: bash
+      run: docker pull ${{ inputs.image }}
