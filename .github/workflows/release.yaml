@@ -1,0 +1,26 @@
+name: Release
+
+on:
+  push:
+    branches:
+      # Only release on the 1.x branch.
+      # In future, we would probably trigger this off a `release` event but this will get us going
+      - '1.x'
+
+jobs:
+
+  tag-release:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Re-tag v1
+        # Note, the current `v1` tag won't have been pulled by "checkout" above, so we can just create a new one
+        run: git tag v1 && git show --no-patch v1
+
+      - name: Publish v1
+        run: git push -f origin v1
