@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+
+jobs:
+
+  integration-test-composer:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.3
+          tools: composer:v2
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Github doesn't seem to like a working-directory arg for a custom action
+      # and I ideally want to test this works as expected in the root
+      - name: Copy test files to root
+        run:  cp test/cached-composer-install/composer.* .
+
+      - name: Install without dev dependencies
+        uses: ./cached-composer-install
+        with:
+          no_dev: 'true'
+
+      - name: Check packages installed without dev dependencies
+        env:
+          EXPECT_DEV_PACKAGES: not-installed
+        run: php test/cached-composer-install/check-installed.php
+
+      - name: Install with dev dependencies
+        uses: ./cached-composer-install
+
+      - name: Check all packages installed
+        env:
+          EXPECT_DEV_PACKAGES: installed
+        run: php test/cached-composer-install/check-installed.php
