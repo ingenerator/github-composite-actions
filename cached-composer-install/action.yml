@@ -1,5 +1,10 @@
 name: 'Cached composer install'
 description: 'Install composer dependencies, cached by the lockfile hash'
+inputs:
+  no_dev:
+    default: 'false'
+    description: Skip installing dev dependencies?
+
 runs:
   using: 'composite'
   steps:
@@ -18,4 +23,7 @@ runs:
 
     - name: Install composer dependencies
       shell: bash
-      run: composer install --no-interaction --no-progress
+      env:
+        DEV_OPTION: ${{ inputs.no_dev == 'true' && '--no-dev' || '' }}
+      run: |
+        composer install $DEV_OPTION --no-interaction --no-progress

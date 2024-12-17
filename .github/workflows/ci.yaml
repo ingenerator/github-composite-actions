@@ -23,6 +23,16 @@ jobs:
       - name: Copy test files to root
         run:  cp test/cached-composer-install/composer.* .
 
+      - name: Install without dev dependencies
+        uses: ./cached-composer-install
+        with:
+          no_dev: 'true'
+
+      - name: Check packages installed without dev dependencies
+        env:
+          EXPECT_DEV_PACKAGES: not-installed
+        run: php test/cached-composer-install/check-installed.php
+
       - name: Install with dev dependencies
         uses: ./cached-composer-install
 
