@@ -2,6 +2,10 @@ name: Release
 
 on:
   push:
+    branches:
+      # Only release on the 1.x branch.
+      # In future, we would probably trigger this off a `release` event but this will get us going
+      - '1.x'
 
 jobs:
 
