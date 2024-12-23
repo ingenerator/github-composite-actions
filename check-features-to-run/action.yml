@@ -1,0 +1,72 @@
+name: 'Check features to run'
+description: |
+  Identify whether to run a complete build or just the smoketests, based on commit msg & branch.
+  By default the main/master branch builds `smoke`, other branches build `full` but you can
+  override this by specifying `[features:smoke]` or `[features:full]` in your commit message.
+  Note that by default this reads the github event metadata, so a checkout is not required.
+inputs:
+  commit_msg:
+    description: 'The commit message for the commit being built'
+    default: ${{ github.event.head_commit.message }}
+  commit_branch_ref:
+    description: 'The branch that is being built (as refs/heads/...)'
+    default: ${{ github.ref }}
+  main_branch:
+    description: 'The main branch of the repository'
+    default: master
+  write_to_file:
+    description: 'Write the value to the specified file (if any)'
+    default: ''
+
+outputs:
+  feature_set:
+    description: 'The feature set to build'
+    value: ${{ steps.calc-features.outputs.feature_set }}
+
+runs:
+  using: composite
+
+  steps:
+  - id: calc-features
+    shell: bash
+    env:
+      COMMIT_MESSAGE: ${{ inputs.commit_msg }}
+      COMMIT_BRANCH: ${{ inputs.commit_branch }}
+      MAIN_BRANCH_REF: "refs/heads/${{ inputs.main_branch }}"
+    run: |
+      set -o errexit
+      set -o nounset
+
+      # Assign the default first
+      if [[ "$COMMIT_BRANCH" == "$MAIN_BRANCH_REF" ]] ; then
+        FEATURE_SET=smoke
+      else
+        FEATURE_SET=full
+      fi
+
+      echo "Default feature set is $FEATURE_SET"
+
+      # Then check the commit message for an override
+      if [[ "$COMMIT_MESSAGE" == *"[features:smoke]"* ]] ; then
+        FEATURE_SET=smoke
+        echo "Overriding to run $FEATURE_SET based on commit message"
+      elif [[ "$COMMIT_MESSAGE" == *"[features:full]"* ]] ; then
+        FEATURE_SET=full
+        echo "Overriding to run $FEATURE_SET based on commit message"
+      fi
+
+      echo "feature_set=$FEATURE_SET" >> $GITHUB_OUTPUT
+
+      if [[ -z "${{ inputs.write_to_file }}" ]] ; then
+        exit
+      fi
+
+      # Finally, write to file if requested (creating the directory first)
+      echo "Writing to ${{ inputs.write_to_file }}"
+      write_to_dir=$(dirname "${{ inputs.write_to_file }}")
+      if [[ ! -d "$write_to_dir" ]] ; then
+        mkdir -p "$write_to_dir"
+      fi
+
+      # NB using -n to prevent a newline in the file
+      echo -n "$FEATURE_SET" > "${{ inputs.write_to_file }}"
