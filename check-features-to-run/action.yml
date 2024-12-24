@@ -31,7 +31,7 @@ runs:
     shell: bash
     env:
       COMMIT_MESSAGE: ${{ inputs.commit_msg }}
-      COMMIT_BRANCH: ${{ inputs.commit_branch }}
+      COMMIT_BRANCH: ${{ inputs.commit_branch_ref }}
       MAIN_BRANCH_REF: "refs/heads/${{ inputs.main_branch }}"
     run: |
       set -o errexit
