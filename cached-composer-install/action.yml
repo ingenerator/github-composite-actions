@@ -27,4 +27,4 @@ runs:
       env:
         DEV_OPTION: ${{ inputs.no_dev == 'true' && '--no-dev' || '' }}
       run: |
-        composer install $DEV_OPTION --no-interaction --no-progress
+        composer install --ansi $DEV_OPTION --no-interaction --no-progress
