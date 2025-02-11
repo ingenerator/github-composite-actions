@@ -19,4 +19,4 @@ runs:
 
     - name: Pull image
       shell: bash
-      run: docker pull ${{ inputs.image }}
+      run: docker pull --quiet ${{ inputs.image }}
