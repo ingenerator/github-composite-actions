@@ -30,4 +30,4 @@ runs:
 
     - name: Push image
       shell: bash
-      run: docker push ${{ inputs.image }}
+      run: docker push --quiet ${{ inputs.image }}
