@@ -21,7 +21,7 @@ jobs:
       # Github doesn't seem to like a working-directory arg for a custom action
       # and I ideally want to test this works as expected in the root
       - name: Copy test files to root
-        run:  cp test/cached-composer-install/composer.* .
+        run: cp test/cached-composer-install/composer.* .
 
       - name: Install without dev dependencies
         uses: ./cached-composer-install
@@ -40,3 +40,36 @@ jobs:
         env:
           EXPECT_DEV_PACKAGES: installed
         run: php test/cached-composer-install/check-installed.php
+
+  integration-test-check-docker-composer-platform:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.3 # note, using 8.3 to prove that the composer reqs are only met within the mounted image
+          tools: composer:v2
+
+      - name: Pass with correct php version
+        uses: ./check-docker-composer-platform
+        with:
+          image: "php:8.4-alpine"
+          composer_json_dir: '${{ github.workspace }}/test/check-docker-composer-platform'
+
+      - name: Fail with incorrect php version
+        id: with-wrong-version
+        continue-on-error: true
+        uses: ./check-docker-composer-platform
+        with:
+          image: "php:8.3-alpine"
+          composer_json_dir: '${{ github.workspace }}/test/check-docker-composer-platform'
+
+      - name: Assert failed steps should have failed
+        shell: bash
+        run: |
+          if [ "${{ steps.with-wrong-version.outcome }}" != "failure" ] ; then
+            echo "Should have failed with incorrect PHP version in image, got ${{ steps.with-wrong-version.outcome }}"
+            exit 1
+          fi
