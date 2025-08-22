@@ -1,0 +1,39 @@
+name: 'Check docker image meets composer platform requirements'
+description: 'Verifies that the PHP and extension versions in a docker image meet the platform requirements of the project and any composer-managed dependencies'
+inputs:
+  image:
+    description: 'The docker image name and tag to check'
+    required: true
+  composer_json_dir:
+    description: 'The directory holding the composer.json and composer.lock - defaults to the main workspace'
+    default: ${{ github.workspace }}
+runs:
+  using: 'composite'
+  steps:
+    - id: find_composer
+      name: Identify path to composer binary
+      shell: bash
+      run: |
+        set +e errexit
+        composer_bin=$(which composer)
+        set -e errexit
+        if [ -z "$composer_bin" ] ; then
+          echo "Cannot find composer binary on the github actions runner: have you run the setup-php action?"
+          exit 1
+        fi
+        
+        echo "composer_bin=$composer_bin" >> $GITHUB_OUTPUT
+
+    - name: Run composer check-platform-reqs
+      shell: bash
+      run: |
+        docker run \
+        --rm \
+        --quiet \
+        -v "${{ steps.find_composer.outputs.composer_bin }}":/usr/bin/composer \
+        -v "${{ inputs.composer_json_dir }}":/workspace \
+        -w /workspace \
+        --entrypoint /usr/bin/composer \
+        "${{ inputs.image }}" \
+        check-platform-reqs \
+        --lock
